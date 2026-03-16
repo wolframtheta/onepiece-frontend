@@ -14,10 +14,6 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build argument for API URL
-ARG API_URL
-ENV API_URL=$API_URL
-
 # Build the application
 RUN pnpm run build:production
 
@@ -44,4 +40,5 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 # Start the SSR server
+# API_URL should be provided by Coolify at runtime as an environment variable
 CMD ["node", "dist/one-piece-frontend/server/server.mjs"]
