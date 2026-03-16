@@ -96,6 +96,7 @@ export class VideoPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
   private visibilityHandler?: () => void;
   private beforeUnloadHandler?: () => void;
   private lastLoadedEpisodeId: number | null = null;
+  private hasAutoSkippedIntro = false;
 
   constructor() {
     // Watch for props changes to reload progress
@@ -142,6 +143,7 @@ export class VideoPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.lastLoadedEpisodeId === episodeId) return;
     
     this.lastLoadedEpisodeId = episodeId;
+    this.hasAutoSkippedIntro = false;
     
     this.progressService.getEpisodeProgress(episodeId).subscribe(progress => {
       if (progress && progress.currentTime > 0 && !progress.completed && this.videoEl) {
@@ -169,10 +171,36 @@ export class VideoPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.introConfig.episodes[String(currentProps.episodeId)] ?? this.introConfig.default;
   }
 
+  private getSeasonSkipKey(): string {
+    const currentProps = this.props();
+    return `skipIntro_season_${currentProps.seasonId}`;
+  }
+
+  private shouldAutoSkipIntro(): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
+    const key = this.getSeasonSkipKey();
+    return localStorage.getItem(key) === 'true';
+  }
+
+  private setSeasonSkipPreference(skip: boolean): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const key = this.getSeasonSkipKey();
+    localStorage.setItem(key, String(skip));
+  }
+
   handleTimeUpdate(): void {
     const timing = this.getIntroTiming();
     if (timing && this.videoEl) {
       const t = this.videoEl.nativeElement.currentTime;
+      
+      // Auto-skip if user skipped intro previously in this season
+      if (!this.hasAutoSkippedIntro && this.shouldAutoSkipIntro() && t >= timing.start && t < timing.end) {
+        this.videoEl.nativeElement.currentTime = timing.end;
+        this.hasAutoSkippedIntro = true;
+        this.showSkip.set(false);
+        return;
+      }
+      
       this.showSkip.set(t >= timing.start && t < timing.end);
     }
   }
@@ -182,6 +210,7 @@ export class VideoPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
     if (timing && this.videoEl) {
       this.videoEl.nativeElement.currentTime = timing.end;
       this.showSkip.set(false);
+      this.setSeasonSkipPreference(true);
     }
   }
 
