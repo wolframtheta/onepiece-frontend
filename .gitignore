@@ -1,4 +1,13 @@
+# Node
 node_modules
+
+# Angular
+dist
+.angular
+
+# Env
+.env
+
+# Misc
 .output
 .vinxi
-.env
