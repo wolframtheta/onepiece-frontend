@@ -19,7 +19,7 @@ ARG API_URL
 ENV API_URL=$API_URL
 
 # Build the application
-RUN pnpm run build
+RUN pnpm run build:production
 
 # Production stage
 FROM node:22.12-alpine AS runner
