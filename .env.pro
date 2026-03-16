@@ -1,1 +1,1 @@
-VITE_API_URL=https://onepiece.scrum-app.com/api
+API_URL=https://onepiece.scrum-app.com/api
